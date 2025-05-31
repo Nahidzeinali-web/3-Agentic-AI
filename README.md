@@ -459,75 +459,137 @@ This runs the pipeline and prints GPT-4's answer based on what it found in the P
 ## 🤖 FULL CODE
 ```python
 # 1. Import required libraries
+
+# Load PDF files using PyPDFLoader
 from langchain_community.document_loaders import PyPDFLoader
+
+# Split long text into smaller overlapping chunks for better embedding and retrieval
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# FAISS is a library for efficient similarity search of embeddings
 from langchain_community.vectorstores import FAISS
+
+# In-memory storage for document chunks used by LangChain vector store
 from langchain_community.docstore.in_memory import InMemoryDocstore
+
+# Use MiniLM model for computing dense vector embeddings for chunks
 from langchain_huggingface import HuggingFaceEmbeddings
+
+# ChatOpenAI allows using OpenAI’s GPT model through LangChain
 from langchain_openai import ChatOpenAI
+
+# LangChain Hub for pulling pre-defined prompts (e.g., RAG prompt template)
 from langchain import hub
+
+# Utility to parse the model’s output into a string
 from langchain_core.output_parsers import StrOutputParser
+
+# Used for direct passthrough of input values (e.g., the user question)
 from langchain_core.runnables import RunnablePassthrough
+
+# Direct use of FAISS backend for indexing and similarity search
 import faiss
+
+# Pretty print utility (optional, useful for inspecting objects)
 import pprint
 
-# 2. Define the path to the PDF file
+
+# 2. Define the path to the input PDF document
 FILE_PATH = "llama2.pdf"
 
-# 3. Load and split the PDF into text chunks
+
+# 3. Load and split the PDF into chunks
+
+# Load the content of the PDF as LangChain Documents (each page as a Document)
 loader = PyPDFLoader(FILE_PATH)
 pages = loader.load()
 
+# Split each page into smaller chunks of 500 characters with 50 character overlap
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 split_docs = splitter.split_documents(pages)
 
-# 4. Initialize MiniLM embeddings (384-dimensional)
+
+# 4. Initialize the embedding model (MiniLM-L6-v2, 384-dimensional)
+
+# This HuggingFace embedding model converts text into dense vectors for semantic search
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# 5. Set up a FAISS index for cosine similarity
-dimension = 384
+
+# 5. Set up a FAISS index
+
+# FAISS index configured for inner product (dot product), commonly used with normalized vectors
+dimension = 384  # MiniLM outputs 384-dimensional vectors
 index = faiss.IndexFlatIP(dimension)
 
+
 # 6. Create a LangChain-compatible FAISS vector store
+
+# InMemoryDocstore keeps track of which vector maps to which document
+# index_to_docstore_id is initially empty and will be populated automatically
 pdf_vector_store = FAISS(
-    embedding_function=embeddings,
-    index=index,
-    docstore=InMemoryDocstore(),
-    index_to_docstore_id={}
+    embedding_function=embeddings,       # Function to convert text into embeddings
+    index=index,                          # The FAISS index to use
+    docstore=InMemoryDocstore(),         # Stores the actual document chunks
+    index_to_docstore_id={}              # Maps FAISS index entries to document IDs
 )
 
-# 7. Add documents to the vector store
+
+# 7. Add the split document chunks to the FAISS vector store
+
+# This indexes all chunked documents using the embeddings and stores them in FAISS
 pdf_vector_store.add_documents(split_docs)
 
-# 8. Create a retriever for top-10 similar chunks
+
+# 8. Create a retriever to get the top-10 most relevant chunks for a query
+
+# The retriever is used to fetch the top-k semantically similar chunks given a question
 retriever = pdf_vector_store.as_retriever(search_kwargs={"k": 10})
 
-# 9. Load RAG prompt from LangChain Hub
+
+# 9. Load the RAG (Retrieval-Augmented Generation) prompt template from LangChain Hub
+
+# This is a pre-configured prompt designed for RAG-style interactions
 prompt = hub.pull("rlm/rag-prompt")
 
-# Optional: Visualize prompt structure
+# (Optional) Inspect the full prompt structure
 # pprint.pprint(prompt.messages)
 
-# 10. Helper function to join chunk contents
+
+# 10. Helper function to format the retrieved documents
+
+# Joins multiple document chunks into a single string separated by double line breaks
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
-# 11. Define RAG chain using retriever + LLM
+
+# 11. Define the complete RAG pipeline
+
+# Combines:
+# - Retriever to fetch relevant chunks
+# - Prompt to wrap question and context
+# - OpenAI’s GPT-4o model to generate the answer
+# - OutputParser to extract plain string output
+
 rag_chain = (
     {
-        "context": retriever | format_docs,
-        "question": RunnablePassthrough()
+        "context": retriever | format_docs,       # Chain: retrieve → format as text
+        "question": RunnablePassthrough()         # Directly passes the input question
     }
-    | prompt
-    | ChatOpenAI(model="gpt-4o")
-    | StrOutputParser()
+    | prompt                                      # Applies the RAG prompt
+    | ChatOpenAI(model="gpt-4o")                  # GPT-4o model for response generation
+    | StrOutputParser()                           # Extracts the generated answer string
 )
 
-# 12. Run the RAG pipeline with a query
+
+# 12. Provide a query to the pipeline
+
+# Example question to ask the RAG system
 query = "What is the LLaMA model?"
 response = rag_chain.invoke(query)
 
-# 13. Output the response
+
+# 13. Print the model’s response
+
 print("\n🧠 Answer from RAG Pipeline:")
 print(response)
 
