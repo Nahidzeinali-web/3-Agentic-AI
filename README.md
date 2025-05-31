@@ -162,7 +162,7 @@ euclidean_distances([query_vector], doc_vectors)
 # Import FAISS (Facebook AI Similarity Search) for efficient similarity search
 import faiss
 
-# Import FAISS vector store wrapper from LangChain for integration with LangChain framework
+# Import the FAISS vector store wrapper from LangChain for integration with the LangChain framework
 from langchain_community.vectorstores import FAISS
 
 # Import an in-memory document store to hold and retrieve documents
@@ -178,7 +178,7 @@ index = faiss.IndexFlatL2(384)
 # - `docstore`: stores documents in memory for retrieval
 # - `index_to_docstore_id`: maps FAISS index positions to docstore IDs
 vector_store = FAISS(
-    embedding_function=embeddings,  # Assume this is defined elsewhere (e.g., OpenAIEmbeddings().embed_query)
+    embedding_function=embeddings,  # Assume this is defined elsewhere (e.g., OpenAIEmbeddings() embed_query)
     index=index,
     docstore=InMemoryDocstore(),
     index_to_docstore_id={}
@@ -434,12 +434,9 @@ print("\n🔍 Top Results:")
 for i, doc in enumerate(results, 1):
     print(f"\n--- Chunk {i} ---")
     print(doc.page_content)
-
-
+```
 ---
-
 ## 🤖 RAG Pipeline with Gemini and LangChain
-
 ```python
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain import hub
