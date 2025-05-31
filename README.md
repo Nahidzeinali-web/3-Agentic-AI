@@ -1,5 +1,5 @@
 
-# 🧠 Complete Guide: Text Embeddings and Retrieval with LangChain, OpenAI, Hugging Face, FAISS & Traditional RAG
+# 🧠 Text Embeddings and Retrieval with LangChain, OpenAI, Hugging Face, FAISS & Traditional RAG
 
 This comprehensive guide walks you through:
 - Generating embeddings with OpenAI and Hugging Face using LangChain
