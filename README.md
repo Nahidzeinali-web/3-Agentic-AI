@@ -438,25 +438,41 @@ for i, doc in enumerate(results, 1):
 ---
 ## 🤖 RAG Pipeline with Gemini and LangChain
 ```python
-from langchain_google_genai import ChatGoogleGenerativeAI
+# Import necessary modules
+from langchain_openai import ChatOpenAI
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+import pprint
 
-retriever = pdf_vector_store.as_retriever(search_kwargs={"k": 10})
-model = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+# Initialize the OpenAI model
+model = ChatOpenAI(model="gpt-4o")
+
+# Load the RAG prompt template from LangChain Hub
 prompt = hub.pull("rlm/rag-prompt")
 
-def format_docs(docs): return "\n\n".join(doc.page_content for doc in docs)
+# Display the loaded prompt structure
+pprint.pprint(prompt.messages)
 
+# Define a helper function to format retrieved documents
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+# Define the RAG pipeline (make sure 'retriever' is defined elsewhere)
 rag_chain = (
-    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    {
+        "context": retriever | format_docs,
+        "question": RunnablePassthrough()
+    }
     | prompt
     | model
     | StrOutputParser()
 )
 
-rag_chain.invoke("what is llama model?")
+# Run the RAG pipeline with a sample question
+response = rag_chain.invoke("what is llama model?")
+print(response)
+
 ```
 
 ---
