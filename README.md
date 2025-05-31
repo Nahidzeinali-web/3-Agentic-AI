@@ -11,7 +11,6 @@ This comprehensive guide walks you through:
 ---
 
 ## 📚 Table of Contents
-
 - [OpenAI Embeddings](#openai-embeddings)
   - [Installation](#installation)
   - [Environment Setup](#environment-setup)
@@ -19,18 +18,23 @@ This comprehensive guide walks you through:
   - [Customize Dimensionality](#customize-dimensionality)
   - [Load and Chunk Documents](#load-and-chunk-documents)
   - [Embed Document Chunks](#embed-document-chunks)
+
 - [Hugging Face Embeddings](#hugging-face-embeddings)
   - [Installation](#installation-1)
   - [Environment Setup](#environment-setup-1)
   - [Embedding Queries and Similarity](#embedding-queries-and-similarity)
+
 - [FAISS Vector Store](#faiss-vector-store)
   - [Building Vector Index](#building-vector-index)
   - [Metadata-Based Filtering](#metadata-based-filtering)
   - [Saving and Reloading Index](#saving-and-reloading-index)
-- [PDF Loading and Chunking](#pdf-loading-and-chunking)
-- [RAG Pipeline with Gemini and LangChain](#rag-pipeline-with-gemini-and-langchain)
+
+- [Beginner’s Guide to PDF Q&A with RAG using LangChain, FAISS, and GPT-4](#beginners-guide-to-pdf-qa-with-rag-using-langchain-faiss-and-gpt-4)
+
 - [Acknowledgements](#acknowledgements)
+
 - [Author](#author)
+
 
 ---
 
