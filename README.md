@@ -393,24 +393,24 @@ from langchain_huggingface import HuggingFaceEmbeddings
 import faiss
 import os
 
-# Step 1: Set the path to your PDF
-FILE_PATH = "llama2.pdf"  # Ensure it's in the current working directory
+# Step 1: Define PDF file path (assumes llama2.pdf is in the current working directory)
+FILE_PATH = "llama2.pdf"
 
-# Step 2: Load PDF pages as LangChain Document objects
+# Step 2: Load PDF pages
 loader = PyPDFLoader(FILE_PATH)
 pages = loader.load()
 
-# Step 3: Split the PDF into overlapping chunks
+# Step 3: Split pages into overlapping chunks
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 split_docs = splitter.split_documents(pages)
 
-# Step 4: Load the HuggingFace embedding model (MiniLM with 384 dimensions)
+# Step 4: Initialize Hugging Face embeddings (384-dimensional vectors)
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Step 5: Create a FAISS index for inner product (cosine similarity with normalized vectors)
+# Step 5: Create FAISS index (IP = inner product, for cosine similarity with normalized vectors)
 index = faiss.IndexFlatIP(384)
 
-# Step 6: Initialize a LangChain FAISS vector store with an in-memory docstore
+# Step 6: Create LangChain FAISS vector store
 pdf_vector_store = FAISS(
     embedding_function=embeddings,
     index=index,
@@ -418,13 +418,23 @@ pdf_vector_store = FAISS(
     index_to_docstore_id={}
 )
 
-# Step 7: Add the split chunks to the vector store
+# Step 7: Add documents to the vector store
 pdf_vector_store.add_documents(split_docs)
 
-# Step 8 (Optional): Print confirmation
-print(f"✅ Successfully embedded {len(split_docs)} chunks from '{FILE_PATH}' into FAISS index.")
+# Step 8: Create a retriever with top-k = 10 most similar chunks
+retriever = pdf_vector_store.as_retriever(
+    search_kwargs={"k": 10}  # number of chunks to return
+)
 
-```
+# Step 9: Invoke the retriever with a user query
+results = retriever.invoke("what is llama model?")
+
+# Step 10: Display results
+print("\n🔍 Top Results:")
+for i, doc in enumerate(results, 1):
+    print(f"\n--- Chunk {i} ---")
+    print(doc.page_content)
+
 
 ---
 
