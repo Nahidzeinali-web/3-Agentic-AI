@@ -19,7 +19,6 @@ This guide demonstrates how to utilize **OpenAI** and **Hugging Face** embedding
   - [Environment Setup](#environment-setup-1)
   - [Generate Embeddings with MiniLM](#generate-embeddings-with-minilm)
   - [Generate Embeddings with MPNet](#generate-embeddings-with-mpnet)
-  - [Applications](#applications-1)
 - [Acknowledgements](#acknowledgements)
 - [Author](#author)
 
