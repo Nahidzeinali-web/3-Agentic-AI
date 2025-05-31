@@ -348,9 +348,29 @@ print("Metadata:", results_news[0].metadata)
 # Step 11: Create retriever interface (k=3)
 retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
-# Step 12: Invoke retriever
+# Step 12: Invoke the retriever
 retrieved_docs = retriever.invoke("LangChain provides abstractions to make working with LLMs easy")
 ```
+# 🧠 Vector Store Storage Strategies: In-Memory, On-Disk, and Cloud
+
+When building semantic search or Retrieval-Augmented Generation (RAG) systems using LangChain and FAISS (or other vector databases), it's essential to select the appropriate **storage backend** based on your specific requirements for speed, persistence, and scalability.
+
+
+1. In-Memory Vector Store: Stores all document vectors and metadata directly in system memory (RAM) using LangChain’s `InMemoryDocstore`.
+2. On-Disk Vector Store: Stores the FAISS index and metadata on disk using faiss.write_index() and faiss.read_index(). Enables persistence between runs.
+3. Cloud Vector Store: Utilizes managed vector databases, such as Pinecone, Qdrant, Weaviate, Vespa, or Chroma, to store and serve embeddings remotely via API.
+
+---
+## 🧩 Overview
+
+| Type        | Description                           | Speed      | Persistence | Memory Usage | Scalability |
+|-------------|---------------------------------------|------------|-------------|---------------|-------------|
+| In-Memory   | Stores everything in RAM              | ⚡ Very Fast | ❌ No       | 🔺 High        | ⚠️ Limited   |
+| On-Disk     | Saves to local file system            | ✅ Moderate | ✅ Yes      | ✅ Low         | ✅ Good      |
+| Cloud       | Remote storage via API (e.g., Pinecone, Qdrant) | 🌐 Varies  | ✅ Yes      | ⚡ Flexible     | ✅ Excellent |
+
+---
+
 
 ### Saving and Reloading Index
 
