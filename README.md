@@ -211,13 +211,93 @@ results = vector_store.similarity_search("Tell me about AI", k=3)
 ### Metadata-Based Filtering
 
 ```python
+# Optional: For assigning unique IDs to documents
+# from uuid import uuid4
+
 from langchain_core.documents import Document
+from langchain_community.vectorstores import FAISS
+from langchain_community.docstore.in_memory import InMemoryDocstore
+import faiss
 
-docs = [Document(page_content="...", metadata={"source": "tweet"}), ...]
-vector_store.add_documents(docs)
+# Define the list of documents with source metadata
+documents = [
+    Document(
+        page_content="I had chocolate chip pancakes and scrambled eggs for breakfast this morning.",
+        metadata={"source": "tweet"},
+    ),
+    Document(
+        page_content="The weather forecast for tomorrow is cloudy and overcast, with a high of 62 degrees.",
+        metadata={"source": "news"},
+    ),
+    Document(
+        page_content="Building an exciting new project with LangChain - come check it out!",
+        metadata={"source": "tweet"},
+    ),
+    Document(
+        page_content="Robbers broke into the city bank and stole $1 million in cash.",
+        metadata={"source": "news"},
+    ),
+    Document(
+        page_content="Wow! That was an amazing movie. I can't wait to see it again.",
+        metadata={"source": "tweet"},
+    ),
+    Document(
+        page_content="Is the new iPhone worth the price? Read this review to find out.",
+        metadata={"source": "website"},
+    ),
+    Document(
+        page_content="The top 10 soccer players in the world right now.",
+        metadata={"source": "website"},
+    ),
+    Document(
+        page_content="LangGraph is the best framework for building stateful, agentic applications!",
+        metadata={"source": "tweet"},
+    ),
+    Document(
+        page_content="The stock market is down 500 points today due to fears of a recession.",
+        metadata={"source": "news"},
+    ),
+    Document(
+        page_content="I have a bad feeling I am going to get deleted :(",
+        metadata={"source": "tweet"},
+    ),
+]
 
-vector_store.similarity_search("LangChain...", k=2)
-vector_store.similarity_search("LangChain...", filter={"source": {"$eq": "tweet"}})
+# Initialize FAISS index for inner product similarity (dot product)
+# Make sure your embedding model outputs normalized vectors if using IndexFlatIP
+index = faiss.IndexFlatIP(384)
+
+# Initialize FAISS vector store with the embedding function
+vector_store = FAISS(
+    embedding_function=embeddings,  # must be defined earlier
+    index=index,
+    docstore=InMemoryDocstore(),
+    index_to_docstore_id={},
+)
+
+# Add documents to the FAISS vector store
+vector_store.add_documents(documents=documents)
+
+# Unfiltered similarity search - returns top 2 most similar documents
+results_all = vector_store.similarity_search(
+    "LangChain provides abstractions to make working with LLMs easy", k=2
+)
+
+# Filtered search: only return documents where metadata source == "tweet"
+results_tweet = vector_store.similarity_search(
+    "LangChain provides abstractions to make working with LLMs easy",
+    filter={"source": {"$eq": "tweet"}},
+)
+
+# Filtered search: only return documents where metadata source == "news"
+results_news = vector_store.similarity_search(
+    "LangChain provides abstractions to make working with LLMs easy",
+    filter={"source": {"$eq": "news"}},
+)
+
+# Display metadata of the top result from the news-filtered search
+print(results_news[0].metadata)
+
 ```
 
 ---
