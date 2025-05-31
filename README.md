@@ -211,92 +211,65 @@ results = vector_store.similarity_search("Tell me about AI", k=3)
 ### Metadata-Based Filtering
 
 ```python
-# Optional: For assigning unique IDs to documents
-# from uuid import uuid4
-
-from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
+from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 import faiss
 
-# Define the list of documents with source metadata
+# Step 1: Load the embedding model (MiniLM outputs 384-dim vectors)
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+# Step 2: Prepare documents with metadata
 documents = [
-    Document(
-        page_content="I had chocolate chip pancakes and scrambled eggs for breakfast this morning.",
-        metadata={"source": "tweet"},
-    ),
-    Document(
-        page_content="The weather forecast for tomorrow is cloudy and overcast, with a high of 62 degrees.",
-        metadata={"source": "news"},
-    ),
-    Document(
-        page_content="Building an exciting new project with LangChain - come check it out!",
-        metadata={"source": "tweet"},
-    ),
-    Document(
-        page_content="Robbers broke into the city bank and stole $1 million in cash.",
-        metadata={"source": "news"},
-    ),
-    Document(
-        page_content="Wow! That was an amazing movie. I can't wait to see it again.",
-        metadata={"source": "tweet"},
-    ),
-    Document(
-        page_content="Is the new iPhone worth the price? Read this review to find out.",
-        metadata={"source": "website"},
-    ),
-    Document(
-        page_content="The top 10 soccer players in the world right now.",
-        metadata={"source": "website"},
-    ),
-    Document(
-        page_content="LangGraph is the best framework for building stateful, agentic applications!",
-        metadata={"source": "tweet"},
-    ),
-    Document(
-        page_content="The stock market is down 500 points today due to fears of a recession.",
-        metadata={"source": "news"},
-    ),
-    Document(
-        page_content="I have a bad feeling I am going to get deleted :(",
-        metadata={"source": "tweet"},
-    ),
+    Document(page_content="I had chocolate chip pancakes and scrambled eggs for breakfast this morning.", metadata={"source": "tweet"}),
+    Document(page_content="The weather forecast for tomorrow is cloudy and overcast, with a high of 62 degrees.", metadata={"source": "news"}),
+    Document(page_content="Building an exciting new project with LangChain - come check it out!", metadata={"source": "tweet"}),
+    Document(page_content="Robbers broke into the city bank and stole $1 million in cash.", metadata={"source": "news"}),
+    Document(page_content="Wow! That was an amazing movie. I can't wait to see it again.", metadata={"source": "tweet"}),
+    Document(page_content="Is the new iPhone worth the price? Read this review to find out.", metadata={"source": "website"}),
+    Document(page_content="The top 10 soccer players in the world right now.", metadata={"source": "website"}),
+    Document(page_content="LangGraph is the best framework for building stateful, agentic applications!", metadata={"source": "tweet"}),
+    Document(page_content="The stock market is down 500 points today due to fears of a recession.", metadata={"source": "news"}),
+    Document(page_content="I have a bad feeling I am going to get deleted :(", metadata={"source": "tweet"}),
 ]
 
-# Initialize FAISS index for inner product similarity (dot product)
-# Make sure your embedding model outputs normalized vectors if using IndexFlatIP
+# Step 3: Initialize a FAISS index (inner product similarity - use with normalized vectors)
 index = faiss.IndexFlatIP(384)
 
-# Initialize FAISS vector store with the embedding function
+# Step 4: Initialize LangChain-compatible FAISS vector store
 vector_store = FAISS(
-    embedding_function=embeddings,  # must be defined earlier
+    embedding_function=embeddings,
     index=index,
     docstore=InMemoryDocstore(),
     index_to_docstore_id={},
 )
 
-# Add documents to the FAISS vector store
+# Step 5: Add documents to the FAISS vector store
 vector_store.add_documents(documents=documents)
 
-# Unfiltered similarity search - returns top 2 most similar documents
-results_all = vector_store.similarity_search(
-    "LangChain provides abstractions to make working with LLMs easy", k=2
-)
+# Step 6: Query to search against the vector store
+query = "LangChain provides abstractions to make working with LLMs easy"
 
-# Filtered search: only return documents where metadata source == "tweet"
+# Step 7: Perform unfiltered similarity search (top 2 results)
+results_all = vector_store.similarity_search(query, k=2)
+
+# Step 8: Perform metadata-filtered search for "tweets"
 results_tweet = vector_store.similarity_search(
-    "LangChain provides abstractions to make working with LLMs easy",
+    query,
     filter={"source": {"$eq": "tweet"}},
 )
 
-# Filtered search: only return documents where metadata source == "news"
+# Step 9: Perform metadata-filtered search for "news"
 results_news = vector_store.similarity_search(
-    "LangChain provides abstractions to make working with LLMs easy",
+    query,
     filter={"source": {"$eq": "news"}},
 )
 
-# Display metadata of the top result from the news-filtered search
-print(results_news[0].metadata)
+# Step 10: Print example result from news
+print("Top result from 'news' source:")
+print("Content:", results_news[0].page_content)
+print("Metadata:", results_news[0].metadata)
 
 ```
 
