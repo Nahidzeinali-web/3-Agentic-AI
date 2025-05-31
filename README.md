@@ -310,38 +310,40 @@ vector_store.save_local("todays_class_faiss_index")
 new_store = FAISS.load_local("todays_class_faiss_index", embeddings, allow_dangerous_deserialization=True)
 new_store.similarity_search("langchain")
 ```
-
 ---
-
-## 📄 PDF Loading and Chunking
-
+## 🤖 PDF RAG Pipeline with FAISS, MiniLM Embeddings, and GPT-4o
 ```python
+# 1. Import required libraries
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain import hub
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 import faiss
-import os
+import pprint
 
-# Step 1: Define PDF file path (assumes llama2.pdf is in the current working directory)
+# 2. Define the path to the PDF file
 FILE_PATH = "llama2.pdf"
 
-# Step 2: Load PDF pages
+# 3. Load and split the PDF into text chunks
 loader = PyPDFLoader(FILE_PATH)
 pages = loader.load()
 
-# Step 3: Split pages into overlapping chunks
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 split_docs = splitter.split_documents(pages)
 
-# Step 4: Initialize Hugging Face embeddings (384-dimensional vectors)
+# 4. Initialize MiniLM embeddings (384-dimensional)
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Step 5: Create FAISS index (IP = inner product, for cosine similarity with normalized vectors)
-index = faiss.IndexFlatIP(384)
+# 5. Set up a FAISS index for cosine similarity
+dimension = 384
+index = faiss.IndexFlatIP(dimension)
 
-# Step 6: Create LangChain FAISS vector store
+# 6. Create a LangChain-compatible FAISS vector store
 pdf_vector_store = FAISS(
     embedding_function=embeddings,
     index=index,
@@ -349,59 +351,39 @@ pdf_vector_store = FAISS(
     index_to_docstore_id={}
 )
 
-# Step 7: Add documents to the vector store
+# 7. Add documents to the vector store
 pdf_vector_store.add_documents(split_docs)
 
-# Step 8: Create a retriever with top-k = 10 most similar chunks
-retriever = pdf_vector_store.as_retriever(
-    search_kwargs={"k": 10}  # number of chunks to return
-)
+# 8. Create a retriever for top-10 similar chunks
+retriever = pdf_vector_store.as_retriever(search_kwargs={"k": 10})
 
-# Step 9: Invoke the retriever with a user query
-results = retriever.invoke("what is llama model?")
-
-# Step 10: Display results
-print("\n🔍 Top Results:")
-for i, doc in enumerate(results, 1):
-    print(f"\n--- Chunk {i} ---")
-    print(doc.page_content)
-```
----
-## 🤖 RAG Pipeline with Gemini and LangChain
-```python
-# Import necessary modules
-from langchain_openai import ChatOpenAI
-from langchain import hub
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-import pprint
-
-# Initialize the OpenAI model
-model = ChatOpenAI(model="gpt-4o")
-
-# Load the RAG prompt template from LangChain Hub
+# 9. Load RAG prompt from LangChain Hub
 prompt = hub.pull("rlm/rag-prompt")
 
-# Display the loaded prompt structure
-pprint.pprint(prompt.messages)
+# Optional: Visualize prompt structure
+# pprint.pprint(prompt.messages)
 
-# Define a helper function to format retrieved documents
+# 10. Helper function to join chunk contents
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
-# Define the RAG pipeline (make sure 'retriever' is defined elsewhere)
+# 11. Define RAG chain using retriever + LLM
 rag_chain = (
     {
         "context": retriever | format_docs,
         "question": RunnablePassthrough()
     }
     | prompt
-    | model
+    | ChatOpenAI(model="gpt-4o")
     | StrOutputParser()
 )
 
-# Run the RAG pipeline with a sample question
-response = rag_chain.invoke("what is llama model?")
+# 12. Run the RAG pipeline with a query
+query = "What is the LLaMA model?"
+response = rag_chain.invoke(query)
+
+# 13. Output the response
+print("\n🧠 Answer from RAG Pipeline:")
 print(response)
 
 ```
