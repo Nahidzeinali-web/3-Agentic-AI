@@ -193,6 +193,12 @@ vector_store.add_texts(["AI is future", "AI is powerful", "Dogs are cute"])
 results = vector_store.similarity_search("Tell me about AI", k=3)
 
 ```
+| Feature               | `Flat`                | `IVF` (Inverted File Index)        | `HNSW` (Graph-based Index)          |
+| --------------------- | --------------------- | ---------------------------------- | ----------------------------------- |
+| Type of Search     | Exact                 | Approximate (cluster-based)        | Approximate (graph-based traversal) |
+| Speed               | Slow (linear scan)    | Fast (search only in top clusters) | Very Fast (graph walk)              |
+
+---
 
 | Dataset Size | Recommended Index                |
 |--------------|----------------------------------|
