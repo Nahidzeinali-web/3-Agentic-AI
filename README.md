@@ -146,15 +146,6 @@ len(vectors)
 
 ---
 
-## Applications
-
-- Semantic Search
-- Clustering
-- Classification
-- Contextual Retrieval
-
----
-
 ## 🙌 Acknowledgements
 
 - [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
