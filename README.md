@@ -386,21 +386,44 @@ new_store.similarity_search("langchain")
 
 ```python
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.docstore.in_memory import InMemoryDocstore
+from langchain_huggingface import HuggingFaceEmbeddings
+import faiss
+import os
 
-loader = PyPDFLoader("llama2.pdf")
+# Step 1: Set the path to your PDF
+FILE_PATH = "llama2.pdf"  # Ensure it's in the current working directory
+
+# Step 2: Load PDF pages as LangChain Document objects
+loader = PyPDFLoader(FILE_PATH)
 pages = loader.load()
 
+# Step 3: Split the PDF into overlapping chunks
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 split_docs = splitter.split_documents(pages)
 
+# Step 4: Load the HuggingFace embedding model (MiniLM with 384 dimensions)
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+# Step 5: Create a FAISS index for inner product (cosine similarity with normalized vectors)
 index = faiss.IndexFlatIP(384)
+
+# Step 6: Initialize a LangChain FAISS vector store with an in-memory docstore
 pdf_vector_store = FAISS(
     embedding_function=embeddings,
     index=index,
     docstore=InMemoryDocstore(),
     index_to_docstore_id={}
 )
+
+# Step 7: Add the split chunks to the vector store
 pdf_vector_store.add_documents(split_docs)
+
+# Step 8 (Optional): Print confirmation
+print(f"✅ Successfully embedded {len(split_docs)} chunks from '{FILE_PATH}' into FAISS index.")
+
 ```
 
 ---
