@@ -291,10 +291,10 @@ from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 import faiss
 
-# Step 1: Load the embedding model (MiniLM outputs 384-dim vectors)
+# Step 1: Load Hugging Face embedding model (MiniLM: 384-dim output)
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Step 2: Prepare documents with metadata
+# Step 2: Prepare sample documents with metadata
 documents = [
     Document(page_content="I had chocolate chip pancakes and scrambled eggs for breakfast this morning.", metadata={"source": "tweet"}),
     Document(page_content="The weather forecast for tomorrow is cloudy and overcast, with a high of 62 degrees.", metadata={"source": "news"}),
@@ -308,10 +308,10 @@ documents = [
     Document(page_content="I have a bad feeling I am going to get deleted :(", metadata={"source": "tweet"}),
 ]
 
-# Step 3: Initialize a FAISS index (inner product similarity - use with normalized vectors)
+# Step 3: Create a FAISS index using inner product (for cosine similarity, use normalized vectors)
 index = faiss.IndexFlatIP(384)
 
-# Step 4: Initialize LangChain-compatible FAISS vector store
+# Step 4: Wrap FAISS index with LangChain's vector store interface
 vector_store = FAISS(
     embedding_function=embeddings,
     index=index,
@@ -319,31 +319,43 @@ vector_store = FAISS(
     index_to_docstore_id={},
 )
 
-# Step 5: Add documents to the FAISS vector store
+# Step 5: Add documents to the vector store
 vector_store.add_documents(documents=documents)
 
-# Step 6: Query to search against the vector store
+# Step 6: Define query
 query = "LangChain provides abstractions to make working with LLMs easy"
 
-# Step 7: Perform unfiltered similarity search (top 2 results)
+# Step 7: Unfiltered similarity search (top 2)
 results_all = vector_store.similarity_search(query, k=2)
 
-# Step 8: Perform metadata-filtered search for "tweets"
+# Step 8: Metadata-filtered search: tweets only
 results_tweet = vector_store.similarity_search(
     query,
     filter={"source": {"$eq": "tweet"}},
 )
 
-# Step 9: Perform metadata-filtered search for "news"
+# Step 9: Metadata-filtered search: news only
 results_news = vector_store.similarity_search(
     query,
     filter={"source": {"$eq": "news"}},
 )
 
-# Step 10: Print example result from news
+# Step 10: Print result from news filter
 print("Top result from 'news' source:")
 print("Content:", results_news[0].page_content)
 print("Metadata:", results_news[0].metadata)
+
+# Step 11: Create retriever interface (k=3)
+retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+
+# Step 12: Invoke retriever
+retrieved_docs = retriever.invoke("LangChain provides abstractions to make working with LLMs easy")
+
+# Step 13: Display retrieved documents
+print("\nRetriever Results:")
+for doc in retrieved_docs:
+    print("-", doc.page_content, "| Metadata:", doc.metadata)
+
 
 ```
 
