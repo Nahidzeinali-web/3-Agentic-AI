@@ -186,7 +186,7 @@ vector_store = FAISS(
 
 # Add a list of texts to the vector store
 # Each text will be embedded and added to the FAISS index for future retrieval
-vector_store.add_texts(["AI is future", "AI is powerful", "Dogs are cute"])
+vector_store.add_texts(["AI is the future", "AI is powerful", "Dogs are cute"])
 
 # Perform a similarity search for the query "Tell me about AI"
 # `k=3` returns the top 3 most similar documents based on the embedding distance
@@ -206,80 +206,11 @@ results = vector_store.similarity_search("Tell me about AI", k=3)
 | ≤ 1M         | `IndexIVFFlat`, `IndexHNSWFlat`  |
 | > 1M         | `IndexIVFPQ`, `IndexHNSWFlat`    |
 
-## 📦 Dataset Size ≤ 100K
-
-### ✅ Recommended Indexes:
-- `IndexFlatL2`
-- `IndexFlatIP`
-
-### 📘 Details:
-
-| Index Type     | Description                                                                 |
-|----------------|-----------------------------------------------------------------------------|
-| `IndexFlatL2`  | Performs brute-force **exact** search using **Euclidean distance (L2)**.    |
-| `IndexFlatIP`  | Performs brute-force **exact** search using **Inner Product (dot product)**. Useful for cosine similarity when vectors are normalized. |
-
-### 🟢 Use Case:
-- Small datasets where **accuracy is critical** and speed/memory usage is acceptable.
-- Ideal for testing, prototyping, or small applications.
-
----
-
-## 📦 Dataset Size ≤ 1M
-
-### ✅ Recommended Indexes:
-- `IndexIVFFlat`
-- `IndexHNSWFlat`
-
-### 📘 Details:
-
-| Index Type      | Description                                                                                         |
-|------------------|-----------------------------------------------------------------------------------------------------|
-| `IndexIVFFlat`   | Partitions the dataset into clusters. **Only searches relevant clusters** for faster results. Requires training. |
-| `IndexHNSWFlat`  | Graph-based index that uses **approximate nearest neighbor** search. No training required. Very fast and accurate. |
-
-### 🟢 Use Case:
-- Medium-sized datasets that require a **balance between speed and recall**.
-- Ideal for production use with up to 1 million vectors.
-
----
-
-## 📦 Dataset Size > 1M
-
-### ✅ Recommended Indexes:
-- `IndexIVFPQ`
-- `IndexHNSWFlat`
-
-### 📘 Details:
-
-| Index Type     | Description                                                                                      |
-|----------------|--------------------------------------------------------------------------------------------------|
-| `IndexIVFPQ`   | Combines inverted index with **Product Quantization** to **compress vectors**. Great memory savings. Requires training. |
-| `IndexHNSWFlat`| Still effective for large datasets. **Graph-based structure** ensures good speed and recall, but higher memory use. |
-
-### 🟢 Use Case:
-- Very large datasets (millions of vectors).
-- When memory efficiency and fast approximate search are more important than 100% accuracy.
-
----
-
-## 📌 Summary Table
-
-| Dataset Size     | Recommended Indexes               | Accuracy      | Speed         | Memory Usage | Training Required |
-|------------------|-----------------------------------|---------------|----------------|---------------|--------------------|
-| ≤ 100K           | `IndexFlatL2`, `IndexFlatIP`      | ✅ High       | ❌ Slow        | 🔺 High        | ❌ No              |
-| ≤ 1M             | `IndexIVFFlat`, `IndexHNSWFlat`   | ⚠️ Medium–High| ✅ Fast        | ⚠️ Medium      | ⚠️ Some (IVF only) |
-| > 1M             | `IndexIVFPQ`, `IndexHNSWFlat`     | ⚠️ Approximate| ✅ Very Fast   | ✅ Low (IVFPQ) | ✅ Yes (IVFPQ)     |
-
----
-
 ## 🧠 Tips
 
 - Use `IndexFlatIP` if your vectors are normalized (for cosine similarity).
-- Use `IndexHNSWFlat` for good accuracy without training, even at large scale.
+- Use `IndexHNSWFlat` for good accuracy without training, even at a large scale.
 - Use `IndexIVFPQ` when working with **very large datasets** and need **compressed storage**.
-
-
 ---
 
 ### Full Example Code--> Metadata-Based Filtering
