@@ -113,21 +113,40 @@ os.environ['HF_TOKEN'] = os.getenv("HF_TOKEN")
 ### Embedding Queries and Similarity
 
 ```python
+# Import Hugging Face Embedding wrapper from LangChain integration
 from langchain_huggingface import HuggingFaceEmbeddings
+
+# Import similarity and distance metrics from scikit-learn
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
+# Initialize the embedding model with a lightweight sentence-transformer model
+# "all-MiniLM-L6-v2" generates 384-dimensional sentence embeddings
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-documents = ["what is a capital of USA?",
-             "Who is a president of USA?",
-             "Who is a prime minister of India?"]
+# List of example documents to compare with the query
+documents = [
+    "what is a capital of USA?",
+    "Who is a president of USA?",
+    "Who is a prime minister of India?"
+]
 
-query = "Narendra modi is prime minister of india?"
+# Query text to find its similarity with the documents above
+query = "Narendra Modi is prime minister of India?"
+
+# Generate embeddings for all documents
 doc_vectors = embeddings.embed_documents(documents)
+
+# Generate an embedding for the query
 query_vector = embeddings.embed_query(query)
 
+# Compute cosine similarity between the query and each document vector
+# Cosine similarity ranges from -1 to 1 (closer to 1 means more similar)
 cosine_similarity([query_vector], doc_vectors)
+
+# Compute Euclidean distances between the query and each document vector
+# Smaller values indicate higher similarity
 euclidean_distances([query_vector], doc_vectors)
+
 ```
 | Metric            | Similarity Score Range | Behavior                              |
 | ----------------- | ---------------------- | ------------------------------------- |
