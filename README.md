@@ -129,7 +129,10 @@ query_vector = embeddings.embed_query(query)
 cosine_similarity([query_vector], doc_vectors)
 euclidean_distances([query_vector], doc_vectors)
 ```
-
+| Metric            | Similarity Score Range | Behavior                              |
+| ----------------- | ---------------------- | ------------------------------------- |
+| Cosine Similarity | \[-1, 1]               | Focuses on angle only |
+| L2 Distance       | \[0, ∞)                | Focuses on **magnitude + direction**  |
 ---
 
 ## 🗂 FAISS Vector Store
