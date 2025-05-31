@@ -310,8 +310,149 @@ vector_store.save_local("todays_class_faiss_index")
 new_store = FAISS.load_local("todays_class_faiss_index", embeddings, allow_dangerous_deserialization=True)
 new_store.similarity_search("langchain")
 ```
+
 ---
-## 🤖 PDF RAG Pipeline with FAISS, MiniLM Embeddings, and GPT-4o
+
+# 🧠 Beginner’s Guide to PDF Q&A with RAG using LangChain, FAISS, and GPT-4
+
+This script lets you **ask questions about a PDF file**, and get grounded answers using **GPT-4** and **retrieved content from the PDF**. Here's a detailed explanation of each step:
+
+---
+
+### ✅ Step 1: Import Required Libraries  
+We load all necessary tools:
+- `LangChain` modules to work with documents, split text, and run models.
+- `FAISS` for fast document similarity search.
+- `Hugging Face` for embeddings.
+- `OpenAI` for language model (GPT-4o).
+
+---
+
+### ✅ Step 2: Define PDF File Path  
+```python
+FILE_PATH = "llama2.pdf"
+```
+Specify the PDF you want to read and ask questions about.
+
+---
+
+### ✅ Step 3: Load PDF Pages  
+```python
+loader = PyPDFLoader(FILE_PATH)
+pages = loader.load()
+```
+This reads the PDF and loads each page into memory so we can process them.
+
+---
+
+### ✅ Step 4: Split Pages into Chunks  
+```python
+splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+split_docs = splitter.split_documents(pages)
+```
+AI models work better with short, focused input. So we split each page into:
+- Chunks of 500 characters.
+- With 50-character overlaps to preserve flow between chunks.
+
+---
+
+### ✅ Step 5: Convert Text Chunks into Vectors (Embeddings)  
+```python
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+```
+Each chunk is turned into a **vector** (list of numbers) using a pre-trained model (`MiniLM`).
+This lets us compare chunks to questions later.
+
+---
+
+### ✅ Step 6: Create a FAISS Index for Similarity Search  
+```python
+index = faiss.IndexFlatIP(384)
+```
+We create a FAISS index, which is like a searchable database of vectors.
+`IP` (inner product) is used for cosine similarity.
+
+---
+
+### ✅ Step 7: Wrap FAISS in LangChain Vector Store  
+```python
+pdf_vector_store = FAISS(
+    embedding_function=embeddings,
+    index=index,
+    docstore=InMemoryDocstore(),
+    index_to_docstore_id={}
+)
+```
+This combines our embeddings and index so we can:
+- Add documents.
+- Retrieve them by similarity.
+
+---
+
+### ✅ Step 8: Add Document Vectors to the Store  
+```python
+pdf_vector_store.add_documents(split_docs)
+```
+Now all your chunks are searchable through vector similarity.
+
+---
+
+### ✅ Step 9: Create a Retriever  
+```python
+retriever = pdf_vector_store.as_retriever(search_kwargs={"k": 10})
+```
+This tool finds the **top 10 most relevant chunks** based on a user's question.
+
+---
+
+### ✅ Step 10: Load a Prompt Template from LangChain Hub  
+```python
+prompt = hub.pull("rlm/rag-prompt")
+```
+This is a predefined template that tells GPT-4 how to answer questions using retrieved context.
+
+---
+
+### ✅ Step 11: Define Helper to Format Retrieved Text  
+```python
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+```
+This formats the retrieved chunks into a single string so GPT-4 can read them.
+
+---
+
+### ✅ Step 12: Build the RAG Chain  
+```python
+rag_chain = (
+    {
+        "context": retriever | format_docs,
+        "question": RunnablePassthrough()
+    }
+    | prompt
+    | ChatOpenAI(model="gpt-4o")
+    | StrOutputParser()
+)
+```
+This connects:
+- Your question ➡️
+- To retrieved context ➡️
+- Into GPT-4 with a template ➡️
+- And returns a nice answer.
+
+---
+
+### ✅ Step 13: Ask a Question and Get an Answer  
+```python
+response = rag_chain.invoke("What is the LLaMA model?")
+print(response)
+```
+This runs the pipeline and prints GPT-4's answer based on what it found in the PDF.
+
+---
+✨ You're now using **Retrieval-Augmented Generation (RAG)** to query PDFs with competent, grounded answers!
+---
+## 🤖 FULL CODE
 ```python
 # 1. Import required libraries
 from langchain_community.document_loaders import PyPDFLoader
@@ -388,8 +529,8 @@ print(response)
 
 ```
 
----
 
+---
 ## 🙌 Acknowledgements
 
 - [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
