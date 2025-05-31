@@ -350,16 +350,7 @@ retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
 # Step 12: Invoke retriever
 retrieved_docs = retriever.invoke("LangChain provides abstractions to make working with LLMs easy")
-
-# Step 13: Display retrieved documents
-print("\nRetriever Results:")
-for doc in retrieved_docs:
-    print("-", doc.page_content, "| Metadata:", doc.metadata)
-
-
 ```
-
----
 
 ### Saving and Reloading Index
 
