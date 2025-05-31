@@ -206,12 +206,6 @@ results = vector_store.similarity_search("Tell me about AI", k=3)
 | ≤ 1M         | `IndexIVFFlat`, `IndexHNSWFlat`  |
 | > 1M         | `IndexIVFPQ`, `IndexHNSWFlat`    |
 
-## 🔍 FAISS Index Selection Guide Based on Dataset Size
-
-Choosing the right FAISS index is crucial for balancing **speed**, **accuracy**, and **memory usage**. Below is a breakdown of the most suitable index types based on the number of vectors in your dataset.
-
----
-
 ## 📦 Dataset Size ≤ 100K
 
 ### ✅ Recommended Indexes:
