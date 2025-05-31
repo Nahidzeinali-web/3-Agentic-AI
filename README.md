@@ -146,7 +146,7 @@ len(vectors)
 
 ---
 
-### Applications
+## Applications
 
 - Semantic Search
 - Clustering
