@@ -140,19 +140,39 @@ euclidean_distances([query_vector], doc_vectors)
 ### Building Vector Index
 
 ```python
+# Import FAISS (Facebook AI Similarity Search) for efficient similarity search
 import faiss
+
+# Import FAISS vector store wrapper from LangChain for integration with LangChain framework
 from langchain_community.vectorstores import FAISS
+
+# Import an in-memory document store to hold and retrieve documents
 from langchain_community.docstore.in_memory import InMemoryDocstore
 
+# Initialize a FAISS index using L2 (Euclidean) distance with 384-dimensional embeddings
+# Make sure your embedding model also returns 384-dimensional vectors
 index = faiss.IndexFlatL2(384)
+
+# Create a LangChain-compatible FAISS vector store
+# - `embedding_function`: a function that converts text into vectors (e.g., OpenAIEmbeddings)
+# - `index`: the FAISS index used for similarity search
+# - `docstore`: stores documents in memory for retrieval
+# - `index_to_docstore_id`: maps FAISS index positions to docstore IDs
 vector_store = FAISS(
-    embedding_function=embeddings,
+    embedding_function=embeddings,  # Assume this is defined elsewhere (e.g., OpenAIEmbeddings().embed_query)
     index=index,
     docstore=InMemoryDocstore(),
     index_to_docstore_id={}
 )
+
+# Add a list of texts to the vector store
+# Each text will be embedded and added to the FAISS index for future retrieval
 vector_store.add_texts(["AI is future", "AI is powerful", "Dogs are cute"])
+
+# Perform a similarity search for the query "Tell me about AI"
+# `k=3` returns the top 3 most similar documents based on the embedding distance
 results = vector_store.similarity_search("Tell me about AI", k=3)
+
 ```
 
 | Dataset Size | Recommended Index                |
