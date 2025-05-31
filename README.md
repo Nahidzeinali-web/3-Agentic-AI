@@ -96,6 +96,7 @@ embeddings.embed_query(final_documents[0].page_content)
 ```
 
 ## 🔹 Hugging Face Embeddings
+Hugging Face sentence-transformers is a Python framework for state-of-the-art sentence, text, and image embeddings. One of the embedding models is used in the HuggingFaceEmbeddings class. We have also added an alias for SentenceTransformerEmbeddings for users who are more familiar with using the package directly.
 
 ### Installation
 
