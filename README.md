@@ -27,10 +27,8 @@ This comprehensive guide walks you through:
   - [Building Vector Index](#building-vector-index)
   - [Metadata-Based Filtering](#metadata-based-filtering)
   - [Saving and Reloading Index](#saving-and-reloading-index)
-
-- [Beginner’s Guide to PDF Q&A with RAG using LangChain, FAISS, and GPT-4](#beginners-guide-to-pdf-qa-with-rag-using-langchain-faiss-and-gpt-4)
-
-- [Full RAG Learning Script with HuggingFace, Pinecone, Gemini, and LangChain Hub Prompt](#full-rag-learning-script-with-huggingface-pinecone-gemini-and-langchain-hub-prompt)
+  - [Beginner’s Guide to PDF Q&A with RAG using LangChain, FAISS, and GPT-4](#beginners-guide-to-pdf-qa-with-rag-using-langchain-faiss-and-gpt-4)
+  - [Full RAG Learning Script with HuggingFace, Pinecone, Gemini, and LangChain Hub Prompt](#full-rag-learning-script-with-huggingface-pinecone-gemini-and-langchain-hub-prompt)
 
 - [Acknowledgements](#acknowledgements)
 
@@ -596,6 +594,7 @@ print(response)
 ```
 ---
 ## Full RAG Learning Script with HuggingFace, Pinecone, Gemini, and LangChain Hub Prompt
+```python
 # ------------------------------------------------------------------------------------
 # 📄 Step 1: Create LangChain Document Objects with Metadata and UUIDs
 # ------------------------------------------------------------------------------------
@@ -745,7 +744,7 @@ print(custom_rag_chain.invoke("what is langchain?"))
 # Ask same question using the LangChain Hub prompt chain
 print("\n🧪 LangChain Hub Prompt RAG Response:")
 print(hub_rag_chain.invoke("what is langchain?"))
-
+```
 
 ---
 ## 🙌 Acknowledgements
