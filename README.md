@@ -1,5 +1,4 @@
-
-# 🧠 Text Embeddings and Retrieval with LangChain, OpenAI, Hugging Face, FAISS & Traditional RAG
+# 🧠 Text Embeddings and Retrieval with LangChain, OpenAI, Hugging Face, FAISS, Pinecone, Gemini, LangChain Hub Prompt  & Traditional RAG
 
 This comprehensive guide walks you through:
 - Generating embeddings with OpenAI and Hugging Face using LangChain
@@ -31,10 +30,11 @@ This comprehensive guide walks you through:
 
 - [Beginner’s Guide to PDF Q&A with RAG using LangChain, FAISS, and GPT-4](#beginners-guide-to-pdf-qa-with-rag-using-langchain-faiss-and-gpt-4)
 
+- [Full RAG Learning Script with HuggingFace, Pinecone, Gemini, and LangChain Hub Prompt](#full-rag-learning-script-with-huggingface-pinecone-gemini-and-langchain-hub-prompt)
+
 - [Acknowledgements](#acknowledgements)
 
 - [Author](#author)
-
 
 ---
 
@@ -594,6 +594,157 @@ print("\n🧠 Answer from RAG Pipeline:")
 print(response)
 
 ```
+---
+## Full RAG Learning Script with HuggingFace, Pinecone, Gemini, and LangChain Hub Prompt
+# ------------------------------------------------------------------------------------
+# 📄 Step 1: Create LangChain Document Objects with Metadata and UUIDs
+# ------------------------------------------------------------------------------------
+
+from uuid import uuid4  # Used to create unique IDs for each document
+from langchain_core.documents import Document  # LangChain document object
+
+# Create a list of (text, source) tuples as sample documents
+raw_docs = [
+    ("I had chocolate chip pancakes and scrambled eggs for breakfast this morning.", "tweet"),
+    ("The weather forecast for tomorrow is cloudy and overcast, with a high of 62 degrees.", "news"),
+    ("Building an exciting new project with LangChain - come check it out!", "tweet"),
+    ("Robbers broke into the city bank and stole $1 million in cash.", "news"),
+    ("Wow! That was an amazing movie. I can't wait to see it again.", "tweet"),
+    ("Is the new iPhone worth the price? Read this review to find out.", "website"),
+    ("The top 10 soccer players in the world right now.", "website"),
+    ("LangGraph is the best framework for building stateful, agentic applications!", "tweet"),
+    ("The stock market is down 500 points today due to fears of a recession.", "news"),
+    ("I have a bad feeling I am going to get deleted :(", "tweet"),
+]
+
+documents = []  # Will store LangChain Document objects
+uuids = []  # Will store UUIDs for indexing in Pinecone
+
+# Convert each raw document into a LangChain Document with a UUID and metadata
+for text, src in raw_docs:
+    uid = str(uuid4())  # Generate a unique ID
+    uuids.append(uid)  # Save UUID to associate later
+    documents.append(Document(page_content=text, metadata={"source": src, "id": uid}))  # Create document
+
+# Print each document’s UUID and source type for debugging and traceability
+for i, doc in enumerate(documents, 1):
+    print(f"{i:02d}. UUID: {doc.metadata['id']} — Source: {doc.metadata['source']}")
+
+# ------------------------------------------------------------------------------------
+# 🌐 Step 2: Pinecone Setup and HuggingFace Embeddings (384-D)
+# ------------------------------------------------------------------------------------
+
+import os  # OS operations
+from dotenv import load_dotenv  # Load API keys from .env
+from pinecone import Pinecone, ServerlessSpec  # Pinecone client setup
+from langchain_pinecone import PineconeVectorStore  # LangChain Pinecone wrapper
+from langchain_huggingface import HuggingFaceEmbeddings  # HuggingFace embedding loader
+
+load_dotenv()  # Load variables from .env file
+pinecone_api_key = os.getenv("PINECONE_API_KEY")  # Get Pinecone API key
+
+pc = Pinecone(api_key=pinecone_api_key)  # Connect to Pinecone
+index_name = "firstproject"  # Name of the index
+embedding_dim = 384  # all-MiniLM-L6-v2 has a fixed 384-dim output
+
+# Delete old index (if exists) to prevent dimension mismatch issues
+if pc.has_index(index_name):
+    print(f"⚠️ Deleting old index '{index_name}' for fresh start...")
+    pc.delete_index(index_name)
+
+# Create a new index with correct embedding dimension and cosine similarity
+print("✅ Creating Pinecone index...")
+pc.create_index(
+    name=index_name,
+    dimension=embedding_dim,
+    metric="cosine",  # Similarity metric
+    spec=ServerlessSpec(cloud="aws", region="us-east-1")  # Serverless region setup
+)
+
+# Load embedding model from Hugging Face
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+# Check the actual output dimension to validate correctness
+print("✅ Confirmed embedding dimension:", len(embeddings.embed_query("test")))
+
+# Connect to the Pinecone index and initialize LangChain vector store
+index = pc.Index(index_name)
+vector_store = PineconeVectorStore(index=index, embedding=embeddings)
+
+# Add the documents into Pinecone with associated UUIDs
+print("📥 Adding documents to vector store...")
+vector_store.add_documents(documents=documents, ids=uuids)
+
+# ------------------------------------------------------------------------------------
+# 🔍 Step 3: Setup Retriever with Score Threshold
+# ------------------------------------------------------------------------------------
+
+# Define retriever that filters out low-relevance matches using a score threshold
+retriever = vector_store.as_retriever(
+    search_type="similarity_score_threshold",  # Match if above threshold
+    search_kwargs={"score_threshold": 0.7}  # Minimum score to consider relevant
+)
+
+# ------------------------------------------------------------------------------------
+# 🧠 Step 4: Setup LangChain RAG with Google Gemini & Prompt Templates
+# ------------------------------------------------------------------------------------
+
+from langchain_google_genai import ChatGoogleGenerativeAI  # Gemini model
+from langchain_core.output_parsers import StrOutputParser  # Extract plain text
+from langchain_core.runnables import RunnablePassthrough  # Pass question through chain
+from langchain_core.prompts import PromptTemplate  # Create custom prompt
+from langchain import hub  # Access LangChain Hub for reusable components
+import pprint  # Pretty print for debugging
+
+# Load Gemini model (flash version is optimized for speed)
+model = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+
+# ✅ A. Define a custom prompt template manually
+custom_prompt = PromptTemplate(
+    template="""You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question.
+If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+Question: {question}
+Context: {context}
+Answer:""",
+    input_variables=["context", "question"]
+)
+
+# ✅ B. Pull LangChain RAG prompt template from LangChain Hub
+hub_prompt = hub.pull("rlm/rag-prompt")
+print("\n📦 LangChain Hub Prompt Loaded:")
+pprint.pprint(hub_prompt.messages)  # Inspect structure of the prompt from the hub
+
+# Helper function to format documents into plain text context
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+# Build RAG chain using custom prompt
+custom_rag_chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}  # Inject formatted context and question
+    | custom_prompt  # Use manually written prompt
+    | model  # Run through Gemini model
+    | StrOutputParser()  # Return final plain text answer
+)
+
+# Build RAG chain using LangChain Hub's predefined prompt
+hub_rag_chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | hub_prompt  # Use hub-pulled prompt
+    | model
+    | StrOutputParser()
+)
+
+# ------------------------------------------------------------------------------------
+# 🧪 Step 5: Compare Results from Both Prompt Types
+# ------------------------------------------------------------------------------------
+
+# Ask question using the custom prompt chain
+print("\n🧪 Custom Prompt RAG Response:")
+print(custom_rag_chain.invoke("what is langchain?"))
+
+# Ask same question using the LangChain Hub prompt chain
+print("\n🧪 LangChain Hub Prompt RAG Response:")
+print(hub_rag_chain.invoke("what is langchain?"))
 
 
 ---
